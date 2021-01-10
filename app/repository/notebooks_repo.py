@@ -3,15 +3,15 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from app.models.notebook import Notebook
-from app.models.ticket import Ticket
-from app.modules.notebooks.schemas import NotebookSchema
-from app.modules.tickets.schemas import TicketSchema
+from ..models.notebook import Notebook
+from ..models.ticket import Ticket
+from ..modules.notebooks.schemas import NotebookSchema
+from ..modules.tickets.schemas import CreateTicketSchema
 
 logger = logging.getLogger('notebooks_repository')
 
 
-def get_notebooks(
+async def get_notebooks(
         db: Session,
         user_id: str
 ) -> Optional[List[Notebook]]:
@@ -22,7 +22,7 @@ def get_notebooks(
         return None
 
 
-def get_notebook(
+async def get_notebook(
         db: Session,
         user_id: str,
         notebook_name: str
@@ -35,17 +35,13 @@ def get_notebook(
         return None
 
 
-def add_notebook(
+async def add_notebook(
         db: Session,
         user_id: str,
         notebook: NotebookSchema
 ) -> Optional[Notebook]:
     try:
-        # check_notebook = get_notebook(db=db, user_id=user_id, notebook_name=notebook.name)
-        # if check_notebook:
-        #     return None
-
-        db_notebook = Notebook(name=notebook.name, user_id=user_id)
+        db_notebook = Notebook(name=notebook.notebook_name, user_id=user_id)
 
         db.add(db_notebook)
         db.commit()
@@ -57,17 +53,29 @@ def add_notebook(
         return None
 
 
-def add_ticket_to_notebook(
+async def delete_notebook(
+        db: Session,
+        user_id: str,
+        notebook_name: str
+) -> bool:
+    try:
+        db.query(Notebook).delete(Notebook.name == notebook_name and
+                                  Notebook.user_id == user_id)
+        db.commit()
+
+        return True
+    except Exception as e:
+        logger.error(e)
+        return False
+
+
+async def add_ticket_to_notebook(
         db: Session,
         notebook_id: int,
-        ticket: TicketSchema
+        ticket: CreateTicketSchema
 ) -> Optional[Ticket]:
     try:
-        # notebook = get_notebook(db=db, user_id=user_id, notebook_name=ticket.notebook_name)
-        # if notebook is None:
-        #     return None
-
-        db_ticket = Ticket(questions=ticket.question, answers=ticket.answer, notebook_id=notebook_id)
+        db_ticket = Ticket(question=ticket.question, answer=ticket.answer, notebook_id=notebook_id)
 
         db.add(db_ticket)
         db.commit()
@@ -79,14 +87,14 @@ def add_ticket_to_notebook(
         return None
 
 
-def delete_ticket_from_notebook(
+async def delete_ticket_from_notebook(
         db: Session,
         user_id: str,
         notebook_name: str,
         ticket_question: str
 ) -> bool:
     try:
-        db.query(Ticket).delete(Ticket.questions == ticket_question and
+        db.query(Ticket).delete(Ticket.question == ticket_question and
                                 Ticket.notebook.name == notebook_name and
                                 Ticket.notebook.user_id == user_id)
         db.commit()
@@ -96,25 +104,28 @@ def delete_ticket_from_notebook(
         return False
 
 
-def get_tickets_from_notebook(
+async def get_tickets_from_notebook(
         db: Session,
         user_id: str,
         notebook_name: str
 ):
     try:
-        return get_notebook(db=db, user_id=user_id, notebook_name=notebook_name).ticket
+        return db.query(Notebook).filter(Notebook.name == notebook_name,
+                                         Notebook.user_id == user_id).first().ticket
     except Exception as e:
         logger.error(e)
         return None
 
 
-def get_ticket(
+async def get_ticket(
         db: Session,
         user_id: str,
+        notebook_name: str,
         ticket_question: str
 ):
     try:
-        return db.query(Ticket).filter(Ticket.questions == ticket_question and
+        return db.query(Ticket).filter(Ticket.question == ticket_question and
+                                       Ticket.notebook.name == notebook_name and
                                        Ticket.notebook.user_id == user_id).first()
     except Exception as e:
         logger.error(e)

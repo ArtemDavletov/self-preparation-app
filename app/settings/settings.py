@@ -10,13 +10,13 @@ if os.path.exists(dotenv_path):
 
 
 class CommonSettings(BaseSettings):
-    APP_NAME: str = "FARM Intro"
-    DEBUG_MODE: bool = False
+    APP_NAME: str = str(os.environ.get('APP_NAME'))
+    DEBUG_MODE: bool = str(os.environ.get('DEBUG_MODE'))
 
 
 class ServerSettings(BaseSettings):
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    APP_HOST: str = str(os.environ.get('APP_HOST'))
+    APP_PORT: int = int(os.environ.get('APP_PORT'))
 
 
 class DatabaseSettings(BaseSettings):

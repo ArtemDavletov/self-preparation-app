@@ -1,4 +1,4 @@
-from app.modules.tickets.routers import router as tickets_router
+from .routers import router as tickets_router
 
 
 __all__ = (

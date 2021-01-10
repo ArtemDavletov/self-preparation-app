@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 from fastapi.responses import Response
 
-
 router = APIRouter()
 
 __all__ = (
@@ -17,4 +16,3 @@ async def route():
 @router.get('/health')
 async def health():
     return Response(content='success')
-

@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from app.settings.database import get_db
-from app.modules.users.schemas import UserSchema, UpdateUserSchema
-from app.repository import users_repo
-
+from ...settings.database import get_db
+from .schemas import UserSchema, UpdateUserSchema
+from ...repository import users_repo
 
 router = APIRouter()
 
@@ -20,21 +19,21 @@ async def get_user(
         login: str,
         db: Session = Depends(get_db)
 ):
-    return users_repo.get_user(db=db, email=email, login=login)
+    return await users_repo.get_user(db=db, email=email, login=login)
 
 
 @router.post('/')
-def create_user(
-    user: UserSchema,
-    db: Session = Depends(get_db)
+async def create_user(
+        user: UserSchema,
+        db: Session = Depends(get_db)
 ):
     # FIXME: Move checking to UserSchema
 
-    user_db = users_repo.get_user(db=db, email=user.email, login=user.login)
+    user_db = await users_repo.get_user(db=db, email=user.email, login=user.login)
     if user_db is not None:
         return Response(status_code=418)
 
-    return users_repo.create_user(db=db, user=user)
+    return await users_repo.create_user(db=db, user=user)
 
 
 @router.put('/')
@@ -43,13 +42,12 @@ async def update_user(
         values: UpdateUserSchema,
         db: Session = Depends(get_db)
 ):
-    return users_repo.update_user(db=db, user_id=user_id, values=values)
+    return await users_repo.update_user(db=db, user_id=user_id, values=values)
 
 
 @router.delete('/')
 async def delete_user(
-    user_id: str,
-    db: Session = Depends(get_db)
+        user_id: str,
+        db: Session = Depends(get_db)
 ):
-    return users_repo.delete_user(db, user_id=user_id)
-
+    return await users_repo.delete_user(db, user_id=user_id)

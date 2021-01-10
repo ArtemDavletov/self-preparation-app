@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from app.settings.database import get_db
-from app.modules.notebooks.schemas import NotebookSchema
-from app.repository import notebooks_repo
+from ...settings.database import get_db
+from ...repository import notebooks_repo
+from . import schemas
 
 router = APIRouter()
 
@@ -17,38 +17,45 @@ __all__ = (
     '/{user_id}',
     response_description='List notebooks'
 )
-def notebooks(
-        user_id: int,
+async def notebooks(
+        user_id: str,
         db: Session = Depends(get_db)
 ):
-    return notebooks_repo.get_notebooks(db=db, user_id=user_id)
+    return await notebooks_repo.get_notebooks(db=db, user_id=user_id)
 
 
 @router.post(
-    '/',
+    '/{user_id}',
 )
-def add_notebook(
-        user_id: int,
-        notebook: NotebookSchema,
+async def add_notebook(
+        user_id: str,
+        request: schemas.NotebookSchema,
         db: Session = Depends(get_db)
 ):
-    check_notebook = notebooks_repo.get_notebook(db=db, user_id=user_id, notebook_name=notebook.name)
+    check_notebook = await notebooks_repo.get_notebook(db=db, user_id=user_id, notebook_name=request.notebook_name)
     if check_notebook:
         return Response(status_code=418)
 
-    return notebooks_repo.add_notebook(db=db, user_id=user_id, notebook=notebook)
+    return await notebooks_repo.add_notebook(db=db, user_id=user_id, notebook=request)
 
 
 @router.put(
-    '/',
+    '/{user_id}',
 )
-async def update_notebook():
+async def update_notebook(
+        user_id: str,
+        request: schemas.UpdateNotebookSchema
+):
+    # TODO: Realize endpoint
     return Response(content='success')
 
 
 @router.delete(
-    '/',
+    '/{user_id}',
 )
-async def delete_notebook():
+async def delete_notebook(
+        user_id: str,
+        request: schemas.NotebookSchema
+):
+    # TODO: Realize endpoint
     return Response(content='success')
-
