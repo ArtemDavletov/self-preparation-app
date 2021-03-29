@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+from ...lib.security import get_current_active_user
+from ...models.user import User
 from ...settings.database import get_db
 from ...repository import notebooks_repo
 from . import schemas
@@ -28,15 +30,15 @@ async def notebooks(
     '/{user_id}',
 )
 async def add_notebook(
-        user_id: str,
         request: schemas.NotebookSchema,
+        current_user: User = Depends(get_current_active_user),
         db: Session = Depends(get_db)
 ):
-    check_notebook = await notebooks_repo.get_notebook(db=db, user_id=user_id, notebook_name=request.notebook_name)
+    check_notebook = await notebooks_repo.get_notebook(db=db, user_id=str(User.id), notebook_name=request.notebook_name)
     if check_notebook:
         return Response(status_code=418)
 
-    return await notebooks_repo.add_notebook(db=db, user_id=user_id, notebook=request)
+    return await notebooks_repo.add_notebook(db=db, user_id=str(User.id), notebook=request)
 
 
 @router.put(

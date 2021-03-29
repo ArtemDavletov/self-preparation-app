@@ -3,27 +3,24 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from passlib.context import CryptContext
-
+from ..lib import security
 from ..models.user import User
 from ..modules.users.schemas import UserSchema, UpdateUserSchema
 
 logger = logging.getLogger('user_repository')
 
 # TODO: Think about where better to place
-pwd_context = CryptContext(schemes=['sha256_crypt', 'des_crypt'], deprecated='auto')
 
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-async def get_user(
+def get_user(
         db: Session,
-        login: str,
-        email: str
+        login: Optional[str] = None,
+        email: Optional[str] = None
 ) -> Optional[User]:
     try:
+        if (login and email) is None:
+            return None
+
         # FIXME: Function should return User
         return db.query(*[c for c in User.__table__.c if c != 'password']).filter(
             User.email == email or User.login == login).first()
@@ -44,7 +41,7 @@ async def create_user(
                        firstname=user.firstname,
                        lastname=user.lastname,
                        email=user.email,
-                       password=get_password_hash(user.password))
+                       password=security.get_password_hash(user.password))
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
